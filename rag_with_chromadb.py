@@ -1,28 +1,8 @@
-from chromadb import PersistentClient
-from sentence_transformers import SentenceTransformer
 import ollama
-
-client = PersistentClient('./chroma_db')
-
-collection = client.get_or_create_collection(name='Knowledge_base')
-
-embedding_model = SentenceTransformer('BAAI/bge-small-en-v1.5')
-
-documents = [
-    "Python is a high level programming language",
-    "RAG stands for Retrieval Augumentad Generation",
-    "Chromadb is open source vector db",
-    "Embeddings coinvert text into numerical vectors"
-]
-
-def createEmbeddings():
+from db_setup import collection
+from create_embeddings import embedding_model
 
 
-    embeddings = embedding_model.encode(documents).tolist();
-
-    collection.add(ids=[f"doc_{i}" for i in range(len(documents))],
-               documents=documents,
-               embeddings=embeddings)
 
 def retrive(query,top_k=3):
     query_embedding = embedding_model.encode(query).tolist()
@@ -40,11 +20,14 @@ def ask(question):
 
         Question: {question}
 
-        Answer using only provided context.
+        Answer using only provided context. 
+        Do not add any extra sentence.
+        If question is outside the context then say it is outside given context.
+
         """
     
     response = ollama.chat(
-        model="llama3",
+        model="qwen3:0.6b",
         messages=[
            {
                "role": "user",
@@ -53,8 +36,9 @@ def ask(question):
         ]
     )
 
-    print("Response from LLM==>")
-    print(response)
+ 
     return response["message"]["content"]
 
-print(ask("What is RAG?"))
+if __name__ == "__main__":
+    question = input("How can i help you?")
+    print(ask(question=question))
